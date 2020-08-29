@@ -3,15 +3,17 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using System.Web;
 
 namespace ImageUploader.BusinessLogic
 {
     public class BusinessLogic
     {
+        const string ServerLocation = "//snavndrsfint111.fastts.firstam.net/CodeFest5/Enzo Techoholics/enc/";
         public bool EncryptImageN_Save(string ImageName)
         {
-            var filePath = "C:\\Users\\vvvidhyuth\\Desktop\\CodeFest5.0\\ImageUploader\\ImageUploader\\UploadedImagesTemp\\images.jpg";
+            var filePath = "C:\\Users\\vvvidhyuth\\Desktop\\CodeFest5.0\\ImageUploader\\ImageUploader\\UploadedImagesTemp\\" + ImageName;
             //var filePath = "../UploadedImagesTemp/" + ImageName;
             byte[] imageBytes = File.ReadAllBytes(filePath);
 
@@ -19,12 +21,6 @@ namespace ImageUploader.BusinessLogic
             byte[] encrypted = null;
             using (AesManaged myAes = new AesManaged())
             {
-                //myAes.GenerateKey();
-                //keyGenerator();
-
-                //myAes.GenerateIV();
-                //GenerateIV();
-
                 myAes.Key = keyGenerator();
                 myAes.IV = GenerateIV();
                 // Encrypt the string to an array of bytes.
@@ -33,10 +29,12 @@ namespace ImageUploader.BusinessLogic
 
             if (encrypted != null)
             {
-                string serverPath = "C:\\Users\\vvvidhyuth\\Desktop\\CodeFest5.0\\ImageUploader\\ImageUploader\\DownloadedImagesTemp\\images.jpg";
+                string serverPath = ServerLocation + ImageName;
                 //string serverPath = "../DownloadedImagesTemp/" + ImageName;
-                
+
                 File.WriteAllBytes(serverPath, encrypted);
+
+                File.Delete(filePath);//Deleting the file from API server
                 return true;
             }
 
@@ -44,40 +42,50 @@ namespace ImageUploader.BusinessLogic
             return false;
         }
 
-        public bool getN_DecryptImage(string ImageName)
+        public async Task<string> GetN_DecryptImage(string ImageName)
         {
-
-            var filePath = "C:\\Users\\vvvidhyuth\\Desktop\\CodeFest5.0\\ImageUploader\\ImageUploader\\DownloadedImagesTemp\\images.jpg";
-            //var filePath = "../DownloadedImagesTemp/" + ImageName;
-
-
-            // write multi-part logic
-
-            byte[] encrypted = File.ReadAllBytes(filePath);
-            string original = string.Empty;
-            using (AesManaged myAes = new AesManaged())
+            try
             {
-                //myAes.GenerateKey();
-                //keyGenerator();
 
-                //myAes.GenerateIV();
-                //GenerateIV();
+                var filePath = ServerLocation + ImageName;
+                if (!Directory.Exists(ServerLocation) || !File.Exists(ServerLocation + ImageName)) 
+                {
+                    throw new Exception("Encrypted file is not found");
+                }
 
-                myAes.Key = keyGenerator();
-                myAes.IV = GenerateIV();
-                original = DecryptStringFromBytes_Aes(encrypted, myAes.Key, myAes.IV);
+                byte[] encrypted = File.ReadAllBytes(filePath);
+
+                if ((encrypted == null || encrypted.Length == 0))
+                    throw new Exception("Encrypted file is null");
+
+
+                string original = string.Empty;
+
+                using (AesManaged myAes = new AesManaged())
+                {
+                    //myAes.GenerateKey();
+                    //keyGenerator();
+
+                    //myAes.GenerateIV();
+                    //GenerateIV();
+
+                    myAes.Key = keyGenerator();
+                    myAes.IV = GenerateIV();
+                    original = DecryptStringFromBytes_Aes(encrypted, myAes.Key, myAes.IV);
+                }
+                if (!string.IsNullOrEmpty(original))
+                {
+                    return original;
+                }
+                throw new Exception("Image not found");
             }
-            if (!string.IsNullOrEmpty(original))
+            catch (Exception e)
             {
-                var imageBytes = Convert.FromBase64String(original);
-                Directory.CreateDirectory("C:\\Users\\vvvidhyuth\\Desktop\\CodeFest5.0\\ImageUploader\\ImageUploader\\DownloadedImagesTemp\\Decrypted");
-                File.WriteAllBytes("C:\\Users\\vvvidhyuth\\Desktop\\CodeFest5.0\\ImageUploader\\ImageUploader\\DownloadedImagesTemp\\Decrypted\\images.jpg", imageBytes);
-                //File.WriteAllBytes("../DownloadedImagesTemp/Decrypted/" + ImageName, imageBytes);
-                return true;
+                throw e;
             }
-            return false;
+            
         }
-        
+
         private byte[] EncryptStringToBytes_Aes(string plainText, byte[] Key, byte[] IV)
         {
             // Check arguments.
@@ -165,7 +173,7 @@ namespace ImageUploader.BusinessLogic
         {
             string keyStr = "a864#$jk%_^&6157";//length needs to 16
             byte[] key = System.Text.Encoding.UTF8.GetBytes(keyStr);
-                        
+
             return key;
         }
 

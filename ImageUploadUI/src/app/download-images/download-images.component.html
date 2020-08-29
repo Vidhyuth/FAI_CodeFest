@@ -1,0 +1,10 @@
+<table style="width:500px">
+    <ng-container *ngFor="let file of this.apiService.listOfImagesUploaded">
+        <tr>
+            <td>
+                <h2>{{file}}</h2>
+            </td>
+            <td><button name="Download Image" (click)="DownloadImage(file)">Download Image</button></td>
+        </tr>
+    </ng-container>
+</table>

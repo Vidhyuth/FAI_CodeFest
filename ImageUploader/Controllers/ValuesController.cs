@@ -12,7 +12,7 @@ namespace ImageUploader.Controllers
     public class ValuesController : ApiController
     {
         BusinessLogic.BusinessLogic businessLogic = new BusinessLogic.BusinessLogic();
-
+        const string ServerLocation = "//snavndrsfint111.fastts.firstam.net/CodeFest5/Enzo Techoholics/enc/";
         [HttpPost]
         [Route("Values/SaveEncyptImg")]
         public async Task<IHttpActionResult> SaveEncyptImg()
@@ -22,7 +22,7 @@ namespace ImageUploader.Controllers
                 var file = HttpContext.Current.Request.Files[0];
                 var task = Task.Run(() =>
                 {
-                    file.SaveAs("../UploadedImagesTemp");
+                    file.SaveAs("C:\\Users\\vvvidhyuth\\Desktop\\CodeFest5.0\\ImageUploader\\ImageUploader\\UploadedImagesTemp\\" + file.FileName);
                     var saveFile = businessLogic.EncryptImageN_Save(file.FileName);
                 });
                 await task;
@@ -44,17 +44,17 @@ namespace ImageUploader.Controllers
 
 
         [HttpGet]
-        [Route("Values/Image/{ImageName}")]
-        public IHttpActionResult Image(string ImageName)
+        [Route("Values/DownloadImage")]
+        public IHttpActionResult DownloadImage(string ImageName)
         {
             try
             {
                 if (string.IsNullOrEmpty(ImageName))
                     throw new Exception("Empty Name");
 
-                var fileDownloaded = businessLogic.getN_DecryptImage(ImageName);
+                var fileBase64 = businessLogic.GetN_DecryptImage(ImageName);
 
-                return Ok();
+                return Ok(fileBase64);
             }
             catch (Exception e)
             {
@@ -66,12 +66,11 @@ namespace ImageUploader.Controllers
         [HttpGet]
         [Route("Values/TestImage")]
         public IHttpActionResult TestImage()
-
         {
             try
             {
                 var saveFile = businessLogic.EncryptImageN_Save("Fig1");
-                var fileDownloaded = businessLogic.getN_DecryptImage("Fig1");
+                var fileDownloaded = businessLogic.GetN_DecryptImage("Fig1");
 
                 return Ok();
             }
